@@ -18,11 +18,11 @@ export const generateInvoicePDF = (invoice) => {
     // Reset Text Color
     doc.setTextColor(0, 0, 0);
 
-    // Company Details (Should be customized)
+    // Company Details
     doc.setFontSize(10);
-    doc.text("My Company Name", 14, 40);
-    doc.text("123 Business Rd", 14, 45);
-    doc.text("City, State, Zip", 14, 50);
+    doc.text(invoice.companyName || "SARSTEDT", 14, 40);
+    doc.text(invoice.companyAddress || "1025 St. James Church Road", 14, 45);
+    doc.text(invoice.companyCityState || "Newton, NC 28658", 14, 50);
 
     // Invoice Details
     const rightColumnX = 140;
@@ -119,9 +119,9 @@ export const generateBulkPDF = (invoices) => {
 
         // Company Details
         doc.setFontSize(10);
-        doc.text("My Company Name", 14, 40);
-        doc.text("123 Business Rd", 14, 45);
-        doc.text("City, State, Zip", 14, 50);
+        doc.text(invoice.companyName || "SARSTEDT", 14, 40);
+        doc.text(invoice.companyAddress || "1025 St. James Church Road", 14, 45);
+        doc.text(invoice.companyCityState || "Newton, NC 28658", 14, 50);
 
         // Invoice Details
         const rightColumnX = 140;
