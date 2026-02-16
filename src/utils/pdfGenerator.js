@@ -42,14 +42,17 @@ export const generateInvoicePDF = (invoice) => {
     doc.text(splitAddress, 14, 78);
 
     // Table
-    const tableColumn = ["Description", "Quantity", "Unit Price", "Total"];
+    const tableColumn = ["Line", "Product #", "Description", "Qty", "Price", "Tracking", "Total"];
     const tableRows = [];
 
     invoice.items.forEach(item => {
         const itemData = [
+            item.lineNum,
+            item.productNum,
             item.description,
             item.quantity,
             `$${Number(item.unitPrice).toFixed(2)}`,
+            item.tracking,
             `$${item.lineTotal.toFixed(2)}`
         ];
         tableRows.push(itemData);
@@ -138,14 +141,17 @@ export const generateBulkPDF = (invoices) => {
         doc.text(splitAddress, 14, 78);
 
         // Table
-        const tableColumn = ["Description", "Quantity", "Unit Price", "Total"];
+        const tableColumn = ["Line", "Product #", "Description", "Qty", "Price", "Tracking", "Total"];
         const tableRows = [];
 
         invoice.items.forEach(item => {
             const itemData = [
+                item.lineNum,
+                item.productNum,
                 item.description,
                 item.quantity,
                 `$${Number(item.unitPrice).toFixed(2)}`,
+                item.tracking,
                 `$${item.lineTotal.toFixed(2)}`
             ];
             tableRows.push(itemData);

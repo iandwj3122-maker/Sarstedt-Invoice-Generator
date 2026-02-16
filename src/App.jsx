@@ -136,19 +136,23 @@ function App() {
               <table className="invoice-table">
                 <thead>
                   <tr>
+                    <th>Product #</th>
                     <th>Description</th>
                     <th>Qty</th>
                     <th>Price</th>
+                    <th>Tracking</th>
                     <th>Total</th>
                   </tr>
                 </thead>
                 <tbody>
                   {selectedInvoice.items.map((item, idx) => (
                     <tr key={idx}>
+                      <td>{item.productNum}</td>
                       <td>{item.description}</td>
                       <td>{item.quantity}</td>
-                      <td>{item.unitPrice}</td>
-                      <td>{item.lineTotal.toFixed(2)}</td>
+                      <td>${item.unitPrice.toFixed(2)}</td>
+                      <td>{item.tracking}</td>
+                      <td>${item.lineTotal.toFixed(2)}</td>
                     </tr>
                   ))}
                 </tbody>
