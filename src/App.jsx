@@ -57,13 +57,16 @@ function App() {
         <h1>Invoice Generator</h1>
         <div className="header-actions">
           {view === 'list' && (
-            <button
-              onClick={handleDownloadBulk}
-              className="nav-btn primary"
-              disabled={isGenerating}
-            >
-              {isGenerating ? 'Generating...' : 'Download All PDF'}
-            </button>
+            <>
+              <button onClick={() => setView('totals')} className="nav-btn">Job Totals</button>
+              <button
+                onClick={handleDownloadBulk}
+                className="nav-btn primary"
+                disabled={isGenerating}
+              >
+                {isGenerating ? 'Generating...' : 'Download All PDF'}
+              </button>
+            </>
           )}
           {view !== 'upload' && (
             <button onClick={() => setView('upload')} className="nav-btn">Upload New</button>
@@ -98,6 +101,49 @@ function App() {
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {view === 'totals' && (
+          <div className="invoice-list-view fade-in">
+            <button onClick={() => setView('list')} className="back-btn">← Back to List</button>
+            <h2>Job Totals Summary</h2>
+
+            <div className="summary-cards">
+              <div className="card">
+                <h3>Total Invoices</h3>
+                <p className="big-number">{invoices.length}</p>
+              </div>
+              <div className="card">
+                <h3>Total Job Value</h3>
+                <p className="big-number">
+                  ${invoices.reduce((sum, inv) => sum + inv.items.reduce((s, i) => s + i.lineTotal, 0), 0).toFixed(2)}
+                </p>
+              </div>
+            </div>
+
+            <table className="invoice-table" style={{ marginTop: '20px' }}>
+              <thead>
+                <tr>
+                  <th>Invoice #</th>
+                  <th>Date</th>
+                  <th>Customer</th>
+                  <th>Items</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {invoices.map((inv) => (
+                  <tr key={inv.invoiceNumber} onClick={() => handleInvoiceClick(inv)} style={{ cursor: 'pointer' }}>
+                    <td>{inv.invoiceNumber}</td>
+                    <td>{inv.date}</td>
+                    <td>{inv.customerName}</td>
+                    <td>{inv.items.length}</td>
+                    <td>${inv.items.reduce((sum, item) => sum + item.lineTotal, 0).toFixed(2)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
 
@@ -166,6 +212,10 @@ function App() {
           </div>
         )}
       </main>
+
+      <footer className="app-footer">
+        <p>INTERNAL USE ONLY</p>
+      </footer>
     </div>
   );
 }

@@ -3,6 +3,14 @@ import autoTable from 'jspdf-autotable';
 
 const PRIMARY_RED = [226, 0, 26]; // #E2001A
 
+const addFooter = (doc, pageNumber) => {
+    const pageCount = doc.internal.getNumberOfPages();
+    doc.setFontSize(8);
+    doc.setTextColor(150, 150, 150);
+    doc.text("INTERNAL USE ONLY", 105, 290, { align: "center" });
+    // Optional: Add page numbers if needed, but User specificed "Internal Use Only" 
+};
+
 export const generateInvoicePDF = (invoice) => {
     const doc = new jsPDF();
 
@@ -16,6 +24,9 @@ export const generateInvoicePDF = (invoice) => {
     doc.text("INVOICE", 14, 20);
 
     // Reset Text Color
+    doc.setTextColor(255, 255, 255); // Keep white for header text if overlapping
+    // Actually title is white, rest is black below header
+
     doc.setTextColor(0, 0, 0);
 
     // Company Details
@@ -98,17 +109,21 @@ export const generateInvoicePDF = (invoice) => {
     doc.setTextColor(...PRIMARY_RED);
     doc.text(`Grand Total: $${totalAmount.toFixed(2)}`, rightColumnX, finalY);
 
-    // Footer
+    // Footer Message
     doc.setTextColor(150, 150, 150);
     doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
     doc.text("Thank you for your business!", 105, 280, { align: "center" });
+
+    // Disclaimer Footer
+    addFooter(doc);
 
     doc.save(`Invoice_${invoice.invoiceNumber}.pdf`);
 };
 
 export const generateBulkPDF = (invoices) => {
     const doc = new jsPDF();
+    let totalAllInvoices = 0;
 
     invoices.forEach((invoice, index) => {
         if (index > 0) {
@@ -198,20 +213,61 @@ export const generateBulkPDF = (invoices) => {
         });
 
         // Total
-        const finalY = doc.lastAutoTable.finalY + 15;
-        const totalAmount = invoice.items.reduce((sum, item) => sum + item.lineTotal, 0);
+        const invTotal = invoice.items.reduce((sum, item) => sum + item.lineTotal, 0);
+        totalAllInvoices += invTotal;
 
+        const finalY = doc.lastAutoTable.finalY + 15;
         doc.setFontSize(14);
         doc.setFont("helvetica", "bold");
         doc.setTextColor(...PRIMARY_RED);
-        doc.text(`Grand Total: $${totalAmount.toFixed(2)}`, rightColumnX, finalY);
+        doc.text(`Grand Total: $${invTotal.toFixed(2)}`, rightColumnX, finalY);
 
-        // Footer
+        // Footer Message
         doc.setTextColor(150, 150, 150);
         doc.setFontSize(9);
         doc.setFont("helvetica", "normal");
         doc.text("Thank you for your business!", 105, 280, { align: "center" });
+
+        // Internal Use Footer
+        addFooter(doc);
     });
+
+    // --- SUMMARY PAGE ---
+    doc.addPage();
+
+    // Header
+    doc.setFillColor(...PRIMARY_RED);
+    doc.rect(0, 0, 210, 30, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(22);
+    doc.text("JOB SUMMARY REPORT", 14, 20);
+
+    // Summary Table
+    const summaryCols = ["Invoice #", "Date", "Customer", "Total"];
+    const summaryRows = invoices.map(inv => {
+        const total = inv.items.reduce((sum, i) => sum + i.lineTotal, 0);
+        return [inv.invoiceNumber, inv.date, inv.customerName, `$${total.toFixed(2)}`];
+    });
+
+    autoTable(doc, {
+        head: [summaryCols],
+        body: summaryRows,
+        startY: 40,
+        theme: 'striped',
+        headStyles: {
+            fillColor: PRIMARY_RED,
+            textColor: [255, 255, 255],
+            fontStyle: 'bold'
+        }
+    });
+
+    // Grand Total
+    const finalY = doc.lastAutoTable.finalY + 15;
+    doc.setFontSize(16);
+    doc.setTextColor(0, 0, 0);
+    doc.text(`Total Job Value: $${totalAllInvoices.toFixed(2)}`, 14, finalY);
+
+    addFooter(doc);
 
     doc.save(`All_Invoices.pdf`);
 };
