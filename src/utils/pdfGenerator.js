@@ -42,17 +42,18 @@ export const generateInvoicePDF = (invoice) => {
     doc.text(splitAddress, 14, 78);
 
     // Table
-    const tableColumn = ["Line", "Product #", "Description", "Qty", "Price", "Tracking", "Total"];
+    // "Price" removed as it is not in Excel
+    const tableColumn = ["Line", "Product #", "Description", "Qty", "Carrier", "Tracking", "Total"];
     const tableRows = [];
 
     invoice.items.forEach(item => {
         const itemData = [
-            item.lineNum,
-            item.productNum,
+            item.lineNum || '',
+            item.productNum || '',
             item.description,
             item.quantity,
-            `$${Number(item.unitPrice).toFixed(2)}`,
-            item.tracking,
+            item.carrier || '',
+            item.tracking || '',
             `$${item.lineTotal.toFixed(2)}`
         ];
         tableRows.push(itemData);
@@ -64,8 +65,8 @@ export const generateInvoicePDF = (invoice) => {
         startY: 95,
         theme: 'plain', // Cleaner look
         styles: {
-            fontSize: 10,
-            cellPadding: 4,
+            fontSize: 9, // Slightly smaller font to fit columns
+            cellPadding: 3,
             lineColor: [220, 220, 220],
             lineWidth: 0.1
         },
@@ -76,6 +77,15 @@ export const generateInvoicePDF = (invoice) => {
         },
         alternateRowStyles: {
             fillColor: [249, 249, 249]
+        },
+        columnStyles: {
+            0: { cellWidth: 15 }, // Line
+            1: { cellWidth: 25 }, // Product #
+            2: { cellWidth: 50 }, // Description
+            3: { cellWidth: 15 }, // Qty
+            4: { cellWidth: 15 }, // Carrier
+            5: { cellWidth: 35 }, // Tracking
+            6: { cellWidth: 20 }  // Total
         }
     });
 
@@ -141,17 +151,17 @@ export const generateBulkPDF = (invoices) => {
         doc.text(splitAddress, 14, 78);
 
         // Table
-        const tableColumn = ["Line", "Product #", "Description", "Qty", "Price", "Tracking", "Total"];
+        const tableColumn = ["Line", "Product #", "Description", "Qty", "Carrier", "Tracking", "Total"];
         const tableRows = [];
 
         invoice.items.forEach(item => {
             const itemData = [
-                item.lineNum,
-                item.productNum,
+                item.lineNum || '',
+                item.productNum || '',
                 item.description,
                 item.quantity,
-                `$${Number(item.unitPrice).toFixed(2)}`,
-                item.tracking,
+                item.carrier || '',
+                item.tracking || '',
                 `$${item.lineTotal.toFixed(2)}`
             ];
             tableRows.push(itemData);
@@ -163,8 +173,8 @@ export const generateBulkPDF = (invoices) => {
             startY: 95,
             theme: 'plain',
             styles: {
-                fontSize: 10,
-                cellPadding: 4,
+                fontSize: 9,
+                cellPadding: 3,
                 lineColor: [220, 220, 220],
                 lineWidth: 0.1
             },
@@ -175,6 +185,15 @@ export const generateBulkPDF = (invoices) => {
             },
             alternateRowStyles: {
                 fillColor: [249, 249, 249]
+            },
+            columnStyles: {
+                0: { cellWidth: 15 }, // Line
+                1: { cellWidth: 25 }, // Product #
+                2: { cellWidth: 50 }, // Description
+                3: { cellWidth: 15 }, // Qty
+                4: { cellWidth: 15 }, // Carrier
+                5: { cellWidth: 35 }, // Tracking
+                6: { cellWidth: 20 }  // Total
             }
         });
 
