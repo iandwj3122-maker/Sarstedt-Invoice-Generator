@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 
 const PRIMARY_RED = [226, 0, 26]; // #E2001A
 
@@ -55,7 +55,7 @@ export const generateInvoicePDF = (invoice) => {
         tableRows.push(itemData);
     });
 
-    doc.autoTable({
+    autoTable(doc, {
         head: [tableColumn],
         body: tableRows,
         startY: 95,
@@ -151,7 +151,7 @@ export const generateBulkPDF = (invoices) => {
             tableRows.push(itemData);
         });
 
-        doc.autoTable({
+        autoTable(doc, {
             head: [tableColumn],
             body: tableRows,
             startY: 95,

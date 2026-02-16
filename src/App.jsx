@@ -33,7 +33,7 @@ function App() {
       await generateInvoicePDF(invoice);
     } catch (error) {
       console.error("PDF Generation Error:", error);
-      alert("Failed to generate PDF. Check console for details.");
+      alert(`Failed to generate PDF: ${error.message}`);
     } finally {
       setIsGenerating(false);
     }
@@ -45,7 +45,7 @@ function App() {
       await generateBulkPDF(invoices);
     } catch (error) {
       console.error("Bulk PDF Generation Error:", error);
-      alert("Failed to generate bulk PDF. Check console for details.");
+      alert(`Failed to generate bulk PDF: ${error.message}`);
     } finally {
       setIsGenerating(false);
     }
