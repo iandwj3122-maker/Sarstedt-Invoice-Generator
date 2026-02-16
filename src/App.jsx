@@ -9,6 +9,7 @@ function App() {
   const [invoices, setInvoices] = useState([]);
   const [view, setView] = useState('upload'); // 'upload', 'list', 'preview'
   const [selectedInvoice, setSelectedInvoice] = useState(null);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const handleFileUpload = async (file) => {
     try {
@@ -26,13 +27,43 @@ function App() {
     setView('preview');
   };
 
+  const handleDownloadSingle = async (invoice) => {
+    setIsGenerating(true);
+    try {
+      await generateInvoicePDF(invoice);
+    } catch (error) {
+      console.error("PDF Generation Error:", error);
+      alert("Failed to generate PDF. Check console for details.");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleDownloadBulk = async () => {
+    setIsGenerating(true);
+    try {
+      await generateBulkPDF(invoices);
+    } catch (error) {
+      console.error("Bulk PDF Generation Error:", error);
+      alert("Failed to generate bulk PDF. Check console for details.");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   return (
     <div className="app-container">
       <header className="app-header">
         <h1>Invoice Generator</h1>
         <div className="header-actions">
           {view === 'list' && (
-            <button onClick={() => generateBulkPDF(invoices)} className="nav-btn primary">Download All PDF</button>
+            <button
+              onClick={handleDownloadBulk}
+              className="nav-btn primary"
+              disabled={isGenerating}
+            >
+              {isGenerating ? 'Generating...' : 'Download All PDF'}
+            </button>
           )}
           {view !== 'upload' && (
             <button onClick={() => setView('upload')} className="nav-btn">Upload New</button>
@@ -43,8 +74,11 @@ function App() {
       <main className="app-content">
         {view === 'upload' && (
           <div className="upload-view fade-in">
-            <h2>Upload Invoice Data</h2>
-            <FileUpload onFileUpload={handleFileUpload} />
+            <div className="upload-content">
+              <h2>Upload Invoice Data</h2>
+              <p>Drag and drop your Excel file to get started.</p>
+              <FileUpload onFileUpload={handleFileUpload} />
+            </div>
           </div>
         )}
 
@@ -73,13 +107,30 @@ function App() {
             <div className="preview-container">
               <div className="preview-header">
                 <h2>Invoice #{selectedInvoice.invoiceNumber}</h2>
-                <button className="download-btn" onClick={() => generateInvoicePDF(selectedInvoice)}>Download PDF</button>
+                <button
+                  className="download-btn"
+                  onClick={() => handleDownloadSingle(selectedInvoice)}
+                  disabled={isGenerating}
+                >
+                  {isGenerating ? 'Generating...' : 'Download PDF'}
+                </button>
               </div>
 
               <div className="invoice-details">
-                <p><strong>Date:</strong> {selectedInvoice.date}</p>
-                <p><strong>Customer:</strong> {selectedInvoice.customerName}</p>
-                <p><strong>Address:</strong> {selectedInvoice.billToAddress}</p>
+                <div>
+                  <p><strong>Customer</strong></p>
+                  <p>{selectedInvoice.customerName}</p>
+                  <br />
+                  <p><strong>Bill To</strong></p>
+                  <p>{selectedInvoice.billToAddress}</p>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <p><strong>Date</strong></p>
+                  <p>{selectedInvoice.date}</p>
+                  <br />
+                  <p><strong>PO Number</strong></p>
+                  <p>{selectedInvoice.poNumber || 'N/A'}</p>
+                </div>
               </div>
 
               <table className="invoice-table">
@@ -102,6 +153,9 @@ function App() {
                   ))}
                 </tbody>
               </table>
+              <div className="total-section" style={{ marginTop: '30px', textAlign: 'right' }}>
+                <h3 className="total">Grand Total: ${selectedInvoice.items.reduce((sum, item) => sum + item.lineTotal, 0).toFixed(2)}</h3>
+              </div>
             </div>
           </div>
         )}
