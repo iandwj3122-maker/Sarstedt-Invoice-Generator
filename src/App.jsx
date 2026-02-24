@@ -7,9 +7,13 @@ import './styles.css';
 
 function App() {
   const [invoices, setInvoices] = useState([]);
-  const [view, setView] = useState('upload'); // 'upload', 'list', 'preview'
+  const [view, setView] = useState('upload'); // 'upload', 'list', 'preview', 'totals'
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [isGenerating, setIsGenerating] = useState(false);
+
+  // Sorting State
+  const [sortField, setSortField] = useState('date'); // 'date', 'invoiceNumber', 'amount'
+  const [sortOrder, setSortOrder] = useState('desc'); // 'asc', 'desc'
 
   const handleFileUpload = async (file) => {
     try {
@@ -51,6 +55,22 @@ function App() {
     }
   };
 
+  // Sorting Logic
+  const sortedInvoices = [...invoices].sort((a, b) => {
+    let comparison = 0;
+    if (sortField === 'date') {
+      // Assuming date is format YYYYMMDD
+      comparison = String(a.date).localeCompare(String(b.date));
+    } else if (sortField === 'invoiceNumber') {
+      comparison = String(a.invoiceNumber).localeCompare(String(b.invoiceNumber));
+    } else if (sortField === 'amount') {
+      const totalA = a.items.reduce((sum, item) => sum + item.lineTotal, 0);
+      const totalB = b.items.reduce((sum, item) => sum + item.lineTotal, 0);
+      comparison = totalA - totalB;
+    }
+    return sortOrder === 'asc' ? comparison : -comparison;
+  });
+
   return (
     <div className="app-container">
       <header className="app-header">
@@ -87,15 +107,30 @@ function App() {
 
         {view === 'list' && (
           <div className="invoice-list-view fade-in">
-            <h2>Processed Invoices ({invoices.length})</h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h2>Processed Invoices ({invoices.length})</h2>
+              <div className="sort-controls" style={{ display: 'flex', gap: '10px' }}>
+                <select value={sortField} onChange={(e) => setSortField(e.target.value)} className="sort-select">
+                  <option value="date">Sort by Date</option>
+                  <option value="invoiceNumber">Sort by Invoice #</option>
+                  <option value="amount">Sort by Amount</option>
+                </select>
+                <select value={sortOrder} onChange={(e) => setSortOrder(e.target.value)} className="sort-select">
+                  <option value="desc">Descending</option>
+                  <option value="asc">Ascending</option>
+                </select>
+              </div>
+            </div>
+
             <div className="invoice-grid">
-              {invoices.map((inv) => (
+              {sortedInvoices.map((inv) => (
                 <div key={inv.invoiceNumber} className="invoice-card" onClick={() => handleInvoiceClick(inv)}>
                   <div className="card-header">
                     <h3>#{inv.invoiceNumber}</h3>
                     <span className="date">{inv.date}</span>
                   </div>
                   <p className="customer">{inv.customerName}</p>
+                  {inv.attnTo && <p className="attn-to" style={{ fontSize: '0.85em', color: '#666' }}>Attn: {inv.attnTo}</p>}
                   <p className="item-count">{inv.items.length} Items</p>
                   <p className="total">Total: ${inv.items.reduce((sum, item) => sum + item.lineTotal, 0).toFixed(2)}</p>
                 </div>
@@ -133,7 +168,7 @@ function App() {
                 </tr>
               </thead>
               <tbody>
-                {invoices.map((inv) => (
+                {sortedInvoices.map((inv) => (
                   <tr key={inv.invoiceNumber} onClick={() => handleInvoiceClick(inv)} style={{ cursor: 'pointer' }}>
                     <td>{inv.invoiceNumber}</td>
                     <td>{inv.date}</td>
@@ -169,6 +204,9 @@ function App() {
                   <br />
                   <p><strong>Bill To</strong></p>
                   <p>{selectedInvoice.billToAddress}</p>
+                  {selectedInvoice.attnTo && (
+                    <p style={{ marginTop: '5px' }}><strong>ATTN:</strong> {selectedInvoice.attnTo}</p>
+                  )}
                 </div>
                 <div style={{ textAlign: 'right' }}>
                   <p><strong>Date</strong></p>

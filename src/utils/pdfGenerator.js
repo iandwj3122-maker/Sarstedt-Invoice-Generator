@@ -52,6 +52,13 @@ export const generateInvoicePDF = (invoice) => {
     const splitAddress = doc.splitTextToSize(invoice.billToAddress || "", 70);
     doc.text(splitAddress, 14, 78);
 
+    if (invoice.attnTo) {
+        // Calculate Y position based on how many lines the address took
+        const addressLines = splitAddress.length;
+        const attnY = 78 + (addressLines * 5) + 2;
+        doc.text(`ATTN: ${invoice.attnTo}`, 14, attnY);
+    }
+
     // Table
     // "Price" removed as it is not in Excel
     const tableColumn = ["Line", "Product #", "Description", "Qty", "Carrier", "Tracking", "Total"];
@@ -164,6 +171,12 @@ export const generateBulkPDF = (invoices) => {
 
         const splitAddress = doc.splitTextToSize(invoice.billToAddress || "", 70);
         doc.text(splitAddress, 14, 78);
+
+        if (invoice.attnTo) {
+            const addressLines = splitAddress.length;
+            const attnY = 78 + (addressLines * 5) + 2;
+            doc.text(`ATTN: ${invoice.attnTo}`, 14, attnY);
+        }
 
         // Table
         const tableColumn = ["Line", "Product #", "Description", "Qty", "Carrier", "Tracking", "Total"];

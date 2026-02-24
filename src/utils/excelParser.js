@@ -50,6 +50,7 @@ export const parseExcelData = async (file) => {
                             invoiceNumber: String(invNum),
                             date: String(row[2]),
                             customerName: String(row[8] || 'Unknown Customer'),
+                            attnTo: String(row[15] || ''), // ADDED ATTN TO
                             poNumber: String(row[7] || ''),
                             billToAddress: addrParts,
                             // Hardcoded Company Info
