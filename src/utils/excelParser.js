@@ -1,5 +1,22 @@
 import * as XLSX from 'xlsx';
 
+// Helper to format YYYYMMDD to "Month D, YYYY"
+const formatDate = (dateStr) => {
+    if (!dateStr) return '';
+    const str = String(dateStr).trim();
+    if (str.length !== 8) return str; // return as-is if not expected length
+
+    const year = str.substring(0, 4);
+    const monthStr = str.substring(4, 6);
+    const day = parseInt(str.substring(6, 8), 10);
+
+    const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    const month = months[parseInt(monthStr, 10) - 1];
+
+    if (!month || isNaN(day)) return str;
+    return `${month} ${day}, ${year}`;
+};
+
 export const parseExcelData = async (file) => {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -26,9 +43,10 @@ export const parseExcelData = async (file) => {
                     const row = jsonData[i];
                     if (!row || row.length === 0) continue;
 
-                    // Column Mapping verified via debug script:
+                    // Column Mapping
                     // Index 3: Invoice #
                     // Index 2: Date
+                    // Index 6: Customer #
                     // Index 8: Customer Name
                     // Index 7: PO #
                     // Address: 10, 11, 12, 13, 14
@@ -46,10 +64,17 @@ export const parseExcelData = async (file) => {
                             row[14]  // Zip
                         ].filter(Boolean).map(s => String(s).trim()).join(', ');
 
+                        const baseCustName = String(row[8] || 'Unknown Customer');
+                        const custNum = row[6] ? ` (#${row[6]})` : '';
+                        const combinedCustomerName = `${baseCustName}${custNum}`;
+
+                        const rawDateStr = String(row[2] || '');
+
                         invoices[invNum] = {
                             invoiceNumber: String(invNum),
-                            date: String(row[2]),
-                            customerName: String(row[8] || 'Unknown Customer'),
+                            date: formatDate(rawDateStr),
+                            rawDate: rawDateStr, // Keep raw YYYYMMDD for accurate chronological sorting
+                            customerName: combinedCustomerName,
                             attnTo: String(row[15] || ''), // ADDED ATTN TO
                             poNumber: String(row[7] || ''),
                             billToAddress: addrParts,

@@ -59,8 +59,8 @@ function App() {
   const sortedInvoices = [...invoices].sort((a, b) => {
     let comparison = 0;
     if (sortField === 'date') {
-      // Assuming date is format YYYYMMDD
-      comparison = String(a.date).localeCompare(String(b.date));
+      // Sort chronologically using the raw YYYYMMDD strings
+      comparison = String(a.rawDate || '').localeCompare(String(b.rawDate || ''));
     } else if (sortField === 'invoiceNumber') {
       comparison = String(a.invoiceNumber).localeCompare(String(b.invoiceNumber));
     } else if (sortField === 'amount') {
