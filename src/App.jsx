@@ -5,6 +5,21 @@ import { parseExcelData } from './utils/excelParser';
 import { generateInvoicePDF, generateBulkPDF } from './utils/pdfGenerator';
 import './styles.css';
 
+// Format a number as $X,XXX.XX
+const formatMoney = (num) => {
+  return '$' + Number(num).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+};
+
+// Format raw YYYYMMDD to M/D/YY for date range display
+const formatShortDate = (rawDate) => {
+  if (!rawDate || String(rawDate).length !== 8) return '';
+  const str = String(rawDate);
+  const m = parseInt(str.substring(4, 6), 10);
+  const d = parseInt(str.substring(6, 8), 10);
+  const y = str.substring(2, 4);
+  return `${m}/${d}/${y}`;
+};
+
 function App() {
   const [invoices, setInvoices] = useState([]);
   const [view, setView] = useState('upload'); // 'upload', 'list', 'preview', 'totals'
@@ -74,7 +89,7 @@ function App() {
   return (
     <div className="app-container">
       <header className="app-header">
-        <h1>Invoice Generator</h1>
+        <h1>Invoice Forge</h1>
         <div className="header-actions">
           {view === 'list' && (
             <>
@@ -132,55 +147,63 @@ function App() {
                   <p className="customer">{inv.customerName}</p>
                   {inv.attnTo && <p className="attn-to" style={{ fontSize: '0.85em', color: '#666' }}>Attn: {inv.attnTo}</p>}
                   <p className="item-count">{inv.items.length} Items</p>
-                  <p className="total">Total: ${inv.items.reduce((sum, item) => sum + item.lineTotal, 0).toFixed(2)}</p>
+                  <p className="total">Total: {formatMoney(inv.items.reduce((sum, item) => sum + item.lineTotal, 0))}</p>
                 </div>
               ))}
             </div>
           </div>
         )}
 
-        {view === 'totals' && (
-          <div className="invoice-list-view fade-in">
-            <button onClick={() => setView('list')} className="back-btn">← Back to List</button>
-            <h2>Job Totals Summary</h2>
+        {view === 'totals' && (() => {
+          const rawDates = invoices.map(inv => String(inv.rawDate || '')).filter(d => d.length === 8).sort();
+          const minDate = rawDates.length > 0 ? formatShortDate(rawDates[0]) : '';
+          const maxDate = rawDates.length > 0 ? formatShortDate(rawDates[rawDates.length - 1]) : '';
+          const dateRangeStr = minDate && maxDate ? `From ${minDate} to ${maxDate}` : '';
+          const jobTotal = invoices.reduce((sum, inv) => sum + inv.items.reduce((s, i) => s + i.lineTotal, 0), 0);
+          return (
+            <div className="invoice-list-view fade-in">
+              <button onClick={() => setView('list')} className="back-btn">← Back to List</button>
+              <h2>Job Totals Summary</h2>
+              {dateRangeStr && <p style={{ color: '#666', marginBottom: '15px' }}>{dateRangeStr}</p>}
 
-            <div className="summary-cards">
-              <div className="card">
-                <h3>Total Invoices</h3>
-                <p className="big-number">{invoices.length}</p>
+              <div className="summary-cards">
+                <div className="card">
+                  <h3>Total Invoices</h3>
+                  <p className="big-number">{invoices.length}</p>
+                </div>
+                <div className="card">
+                  <h3>Total Job Value</h3>
+                  <p className="big-number">
+                    {formatMoney(jobTotal)}
+                  </p>
+                </div>
               </div>
-              <div className="card">
-                <h3>Total Job Value</h3>
-                <p className="big-number">
-                  ${invoices.reduce((sum, inv) => sum + inv.items.reduce((s, i) => s + i.lineTotal, 0), 0).toFixed(2)}
-                </p>
-              </div>
-            </div>
 
-            <table className="invoice-table" style={{ marginTop: '20px' }}>
-              <thead>
-                <tr>
-                  <th>Invoice #</th>
-                  <th>Date</th>
-                  <th>Customer</th>
-                  <th>Items</th>
-                  <th>Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sortedInvoices.map((inv) => (
-                  <tr key={inv.invoiceNumber} onClick={() => handleInvoiceClick(inv)} style={{ cursor: 'pointer' }}>
-                    <td>{inv.invoiceNumber}</td>
-                    <td>{inv.date}</td>
-                    <td>{inv.customerName}</td>
-                    <td>{inv.items.length}</td>
-                    <td>${inv.items.reduce((sum, item) => sum + item.lineTotal, 0).toFixed(2)}</td>
+              <table className="invoice-table" style={{ marginTop: '20px' }}>
+                <thead>
+                  <tr>
+                    <th>Invoice #</th>
+                    <th>Date</th>
+                    <th>Customer</th>
+                    <th>Items</th>
+                    <th>Total</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+                </thead>
+                <tbody>
+                  {sortedInvoices.map((inv) => (
+                    <tr key={inv.invoiceNumber} onClick={() => handleInvoiceClick(inv)} style={{ cursor: 'pointer' }}>
+                      <td>{inv.invoiceNumber}</td>
+                      <td>{inv.date}</td>
+                      <td>{inv.customerName}</td>
+                      <td>{inv.items.length}</td>
+                      <td>{formatMoney(inv.items.reduce((sum, item) => sum + item.lineTotal, 0))}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          );
+        })()}
 
         {view === 'preview' && selectedInvoice && (
           <div className="invoice-preview-view fade-in">
@@ -202,7 +225,7 @@ function App() {
                   <p><strong>Customer</strong></p>
                   <p>{selectedInvoice.customerName}</p>
                   <br />
-                  <p><strong>Bill To</strong></p>
+                  <p><strong>Ship To</strong></p>
                   <p>{selectedInvoice.billToAddress}</p>
                   {selectedInvoice.attnTo && (
                     <p style={{ marginTop: '5px' }}><strong>ATTN:</strong> {selectedInvoice.attnTo}</p>
@@ -238,13 +261,13 @@ function App() {
                       <td>{item.quantity}</td>
                       <td>{item.carrier}</td>
                       <td>{item.tracking}</td>
-                      <td>${item.lineTotal.toFixed(2)}</td>
+                      <td>{formatMoney(item.lineTotal)}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
               <div className="total-section" style={{ marginTop: '30px', textAlign: 'right' }}>
-                <h3 className="total">Grand Total: ${selectedInvoice.items.reduce((sum, item) => sum + item.lineTotal, 0).toFixed(2)}</h3>
+                <h3 className="total">Grand Total: {formatMoney(selectedInvoice.items.reduce((sum, item) => sum + item.lineTotal, 0))}</h3>
               </div>
             </div>
           </div>

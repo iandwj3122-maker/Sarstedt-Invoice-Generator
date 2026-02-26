@@ -3,6 +3,11 @@ import autoTable from 'jspdf-autotable';
 
 const PRIMARY_RED = [226, 0, 26]; // #E2001A
 
+// Format number as $X,XXX.XX
+const formatMoney = (num) => {
+    return '$' + Number(num).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+};
+
 const addFooter = (doc, pageNumber) => {
     const pageCount = doc.internal.getNumberOfPages();
     doc.setFontSize(8);
@@ -43,9 +48,9 @@ export const generateInvoicePDF = (invoice) => {
     doc.text(`Date: ${invoice.date}`, rightColumnX, 45);
     doc.text(`PO #: ${invoice.poNumber || 'N/A'}`, rightColumnX, 50);
 
-    // Bill To
+    // Ship To
     doc.setFont("helvetica", "bold");
-    doc.text("Bill To:", 14, 65);
+    doc.text("Ship To:", 14, 65);
     doc.setFont("helvetica", "normal");
     doc.text(invoice.customerName, 14, 72);
 
@@ -72,7 +77,7 @@ export const generateInvoicePDF = (invoice) => {
             item.quantity,
             item.carrier || '',
             item.tracking || '',
-            `$${item.lineTotal.toFixed(2)}`
+            `${formatMoney(item.lineTotal)}`
         ];
         tableRows.push(itemData);
     });
@@ -114,7 +119,7 @@ export const generateInvoicePDF = (invoice) => {
     doc.setFontSize(14);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(...PRIMARY_RED);
-    doc.text(`Grand Total: $${totalAmount.toFixed(2)}`, rightColumnX, finalY);
+    doc.text(`Grand Total: ${formatMoney(totalAmount)}`, rightColumnX, finalY);
 
     // Footer Message
     doc.setTextColor(150, 150, 150);
@@ -163,9 +168,9 @@ export const generateBulkPDF = (invoices) => {
         doc.text(`Date: ${invoice.date}`, rightColumnX, 45);
         doc.text(`PO #: ${invoice.poNumber || 'N/A'}`, rightColumnX, 50);
 
-        // Bill To
+        // Ship To
         doc.setFont("helvetica", "bold");
-        doc.text("Bill To:", 14, 65);
+        doc.text("Ship To:", 14, 65);
         doc.setFont("helvetica", "normal");
         doc.text(invoice.customerName, 14, 72);
 
@@ -190,7 +195,7 @@ export const generateBulkPDF = (invoices) => {
                 item.quantity,
                 item.carrier || '',
                 item.tracking || '',
-                `$${item.lineTotal.toFixed(2)}`
+                `${formatMoney(item.lineTotal)}`
             ];
             tableRows.push(itemData);
         });
@@ -233,7 +238,7 @@ export const generateBulkPDF = (invoices) => {
         doc.setFontSize(14);
         doc.setFont("helvetica", "bold");
         doc.setTextColor(...PRIMARY_RED);
-        doc.text(`Grand Total: $${invTotal.toFixed(2)}`, rightColumnX, finalY);
+        doc.text(`Grand Total: ${formatMoney(invTotal)}`, rightColumnX, finalY);
 
         // Footer Message
         doc.setTextColor(150, 150, 150);
@@ -259,7 +264,7 @@ export const generateBulkPDF = (invoices) => {
     const summaryCols = ["Invoice #", "Date", "Customer", "Total"];
     const summaryRows = invoices.map(inv => {
         const total = inv.items.reduce((sum, i) => sum + i.lineTotal, 0);
-        return [inv.invoiceNumber, inv.date, inv.customerName, `$${total.toFixed(2)}`];
+        return [inv.invoiceNumber, inv.date, inv.customerName, `${formatMoney(total)}`];
     });
 
     autoTable(doc, {
@@ -278,7 +283,7 @@ export const generateBulkPDF = (invoices) => {
     const finalY = doc.lastAutoTable.finalY + 15;
     doc.setFontSize(16);
     doc.setTextColor(0, 0, 0);
-    doc.text(`Total Job Value: $${totalAllInvoices.toFixed(2)}`, 14, finalY);
+    doc.text(`Total Job Value: ${formatMoney(totalAllInvoices)}`, 14, finalY);
 
     addFooter(doc);
 
